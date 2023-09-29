@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:stylish_bottom_bar/model/bar_items.dart';
 import 'package:stylish_bottom_bar/stylish_bottom_bar.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 
 void main() {
   runApp(const MyApp());
@@ -55,12 +57,34 @@ class _MyHomePageState extends State<MyHomePage> {
   dynamic selected;
   var heart = false;
   PageController controller = PageController();
+  bool _hasCallSupport = false;
+  Future<void>? _launched;
+  String _phone = '+254713175969';
 
   @override
   void dispose() {
     controller.dispose();
     super.dispose();
   }  
+
+  @override
+  void initState() {
+    canLaunchUrl(Uri(scheme: 'tel', path: '123')).then((bool result) {
+      setState(() {
+        _hasCallSupport = result;
+      });
+    });
+    super.initState();
+  }
+
+  //  Future<void> share() async {
+  //   await FlutterShare.share(
+  //     title: 'Example share',
+  //     text: 'Example share text',
+  //     linkUrl: 'https://flutter.dev/',
+  //     chooserTitle: 'Example Chooser Title'
+  //   );
+  // }
 
   void _settingModalBottomSheet(context){
     showModalBottomSheet(
@@ -70,14 +94,20 @@ class _MyHomePageState extends State<MyHomePage> {
             child:  Wrap(
             children: <Widget>[
               ListTile(
-            leading:  Icon(Icons.music_note),
-            title:  Text('Music'),
-            onTap: () => {}          
+            leading:  Icon(Icons.share),
+            title:  Text('Share Contact'),
+            onTap: () {
+              // Share.share('check out my website https://example.com');
+            }          
           ),
            ListTile(
-            leading:  Icon(Icons.videocam),
-            title:  Text('Video'),
-            onTap: () => {},          
+            leading:  Icon(Icons.call),
+            title:  Text('Call Contact'),
+            onTap:  _hasCallSupport
+                    ? () => setState(() {
+                          _launched = _makePhoneCall(_phone);
+                        })
+                    : null,         
           ),
            ListTile(
             leading:  Icon(Icons.videocam),
@@ -90,6 +120,14 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     );
 }
+
+ Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri launchUri = Uri(
+      scheme: 'tel',
+      path: phoneNumber,
+    );
+    await launchUrl(launchUri);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -229,8 +267,22 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       body: PageView(
           controller: controller,
-          children: const [
-            Center(child: Text('Home')),
+          children:  [
+            Column(
+              children: [
+                Center(child: Text('Home')),
+                ElevatedButton(
+                onPressed: _hasCallSupport
+                    ? () => setState(() {
+                          _launched = _makePhoneCall(_phone);
+                        })
+                    : null,
+                child: _hasCallSupport
+                    ? const Text('Make phone call')
+                    : const Text('Calling not supported'),
+              ),
+              ],
+            ),
             Center(child: Text('Star')),
             Center(child: Text('Style')),
             Center(child: Text('Profile')),
